@@ -134,20 +134,26 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
     with tab4:
         st.header("4. Đánh Giá Tổng Thể")
 
-        for name in cv_texts:
-            scoring = score_results[name]
+        for name, text in cv_texts.items():
+            info = extract_info(text)
+            scoring = score_cv(text, info)
 
             st.subheader(name)
+
+            # Tổng điểm
             st.metric("Điểm CV", f"{scoring['total_score']}/100")
             st.progress(scoring["total_score"] / 100)
 
-            st.subheader("Chi tiết điểm")
+            # Chi tiết (không thanh con)
+            st.markdown("### Chi tiết điểm")
+
             for k, v in scoring["breakdown"].items():
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.write(f"**{k.upper()}** (Trọng số {v['weight']}%)")
-                    st.progress(v["score"] / 100)
-                with col2:
-                    st.metric("", f"{v['score']}/100")
+                # điểm thực tế của từng mục
+                display_score = round(v["score"] * v["weight"])
+                st.write(
+                    f"**{k.upper()}** ( {v['weight']}%) : "
+                    f"{display_score}/{v['weight']}"
+                )
 
             st.divider()
+

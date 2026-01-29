@@ -1,30 +1,30 @@
 def score_cv(text, info):
     breakdown = {
         "skills": {
-            "score": 30 if info["skills"] else 5,
-            "weight": 30   # %
+            "weight": 30,
+            "score": 1 if info["skills"] else 0
         },
         "experience": {
-            "score": 35 if len(text) > 800 else 15,
-            "weight": 35
+            "weight": 35,
+            "score": 1 if len(info["experience"]) > 0 else 0
         },
         "education": {
-            "score": 15 if "đại học" in text.lower() else 5,
-            "weight": 15
+            "weight": 15,
+            "score": min(len(info["education"]) / 2, 1)
         },
         "formatting": {
-            "score": 10,
-            "weight": 10
+            "weight": 10,
+            "score": 1 if len(text) > 500 else 0.5
         },
         "keywords": {
-            "score": 10 if len(info["skills"]) >= 3 else 5,
-            "weight": 10
+            "weight": 10,
+            "score": 1 if "python" in text.lower() else 0.5
         }
     }
 
-    total_score = sum(v["score"] for v in breakdown.values())
+    total_score = sum(v["score"] * v["weight"] for v in breakdown.values())
 
     return {
-        "total_score": total_score,
+        "total_score": round(total_score),
         "breakdown": breakdown
     }

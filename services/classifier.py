@@ -1,28 +1,101 @@
-# services/classifier.py
 from services.embedding import embed_text
 from sklearn.metrics.pairwise import cosine_similarity
 
 # taxonomy mô tả ngành
 CATEGORIES = {
-    "IT / Software": "software developer programming backend frontend",
-    "Data / AI": "data science machine learning ai",
-    "DevOps": "devops docker kubernetes ci cd aws linux system",
-    "Marketing": "seo digital marketing",
-    "Finance": "accounting finance audit",
-    "Education": "teacher lecturer training",
-    "Healthcare": "nurse doctor medical"
+    "Web Development": "frontend backend fullstack javascript react nodejs html css typescript flask django express nextjs bootstrap tailwind",
+    "Mobile Development": "ios android react-native flutter swift kotlin objective-c dart jetpack-compose",
+    "Data Engineering": "data-pipeline sql spark hadoop etl warehouse airflow kafka dbt redshift snowflake bigquery databricks hive",
+    "Data Science & AI": "machine-learning deep-learning ai-engineer cnn rnn transformers nlp computer-vision tensorflow pytorch sagemaker azure-ml tensorrt onnx opencv scikit-learn pandas numpy",
+    "Cybersecurity": "pentest security ethical-hacking firewall cryptography network-security soc malware-analysis owasp siem vulnerability penetration-tester",
+    "Cloud & DevOps": "kubernetes jenkins terraform ansible cicd infrastructure-as-code monitoring logging bash-scripting automation aws azure google-cloud docker ec2",
+    "Game Development": "unity unreal-engine csharp game-design graphics-programming directx opengl shader cplusplus",
+    "Embedded Systems / IoT": "c firmware microcontroller hardware raspberry-pi arduino embedded-linux rtos assembly fpga arm",
+    "Software Testing / QA": "automation-testing manual-testing selenium cypress quality-assurance unit-test jmeter postman appium",
+    "IT Support & Networking": "helpdesk system-admin cisco network-protocol windows-server virtualization vlan active-directory routing dns dhcp"
 }
 
 # mapping concept → ngành
 CONCEPT_TO_CATEGORY = {
-    "python": ["IT / Software", "Data / AI"],
-    "java": ["IT / Software"],
-    "docker": ["IT / Software", "DevOps"],
-    "sql": ["IT / Software", "Data / AI"],
-    "seo": ["Marketing"],
-    "accounting": ["Finance"],
-    "teacher": ["Education"],
-    "nurse": ["Healthcare"]
+    # --- Ngôn ngữ lập trình (Programming Languages) ---
+    "python": ["Data Science & AI", "Web Development", "Data Engineering", "Cloud & DevOps"],
+    "javascript": ["Web Development", "Mobile Development", "Software Testing / QA"],
+    "typescript": ["Web Development", "Mobile Development"],
+    "java": ["Web Development", "Mobile Development", "Data Engineering", "Software Testing / QA"],
+    "csharp": ["Game Development", "Web Development"],
+    "cplusplus": ["Game Development", "Embedded Systems / IoT"],
+    "c": ["Embedded Systems / IoT"],
+    "php": ["Web Development"],
+    "go": ["Cloud & DevOps", "Web Development", "Data Engineering"],
+    "rust": ["Web Development", "Embedded Systems / IoT", "Data Engineering"],
+    "swift": ["Mobile Development"],
+    "kotlin": ["Mobile Development"],
+    "sql": ["Data Engineering", "Data Science & AI", "Web Development"],
+
+    # --- Trí tuệ nhân tạo & Khoa học dữ liệu (Data Science & AI) ---
+    "machine-learning": ["Data Science & AI"],
+    "deep-learning": ["Data Science & AI"],
+    "cnn": ["Data Science & AI"],
+    "rnn": ["Data Science & AI"],
+    "transformers": ["Data Science & AI"],
+    "nlp": ["Data Science & AI"],
+    "tensorflow": ["Data Science & AI"],
+    "pytorch": ["Data Science & AI"],
+    "sagemaker": ["Data Science & AI"], # Công cụ AI trên Cloud
+    "azure-ml": ["Data Science & AI"],  # Công cụ AI trên Cloud
+    "tensorrt": ["Data Science & AI"],  # Tối ưu hóa AI
+    "onnx": ["Data Science & AI"],      # Định dạng AI
+    "opencv": ["Data Science & AI"],
+    "pandas": ["Data Science & AI", "Data Engineering"],
+    "scikit-learn": ["Data Science & AI"],
+    "tableau": ["Data Science & AI"],
+    "power-bi": ["Data Science & AI"],
+
+    # --- Kỹ thuật dữ liệu (Data Engineering) ---
+    "spark": ["Data Engineering"],
+    "hadoop": ["Data Engineering"],
+    "kafka": ["Data Engineering"],
+    "airflow": ["Data Engineering"],
+    "dbt": ["Data Engineering"],
+    "snowflake": ["Data Engineering"],
+    "redshift": ["Data Engineering"],
+    "nosql": ["Data Engineering", "Web Development"],
+    "mongodb": ["Web Development", "Data Engineering"],
+    "postgresql": ["Web Development", "Data Engineering"],
+
+    # --- Hạ tầng & Vận hành (Cloud & DevOps) ---
+    "docker": ["Cloud & DevOps", "Data Science & AI", "Web Development"],
+    "kubernetes": ["Cloud & DevOps"],
+    "aws": ["Cloud & DevOps"],
+    "azure": ["Cloud & DevOps"],
+    "google-cloud": ["Cloud & DevOps"],
+    "terraform": ["Cloud & DevOps"],
+    "jenkins": ["Cloud & DevOps"],
+    "ansible": ["Cloud & DevOps"],
+    "linux": ["Cloud & DevOps", "Embedded Systems / IoT", "IT Support & Networking"],
+    "git": ["Web Development", "Mobile Development", "Data Engineering", "Cloud & DevOps"],
+
+    # --- Bảo mật (Cybersecurity) ---
+    "wireshark": ["Cybersecurity", "IT Support & Networking"],
+    "metasploit": ["Cybersecurity"],
+    "nmap": ["Cybersecurity"],
+    "firewall": ["Cybersecurity", "IT Support & Networking"],
+    "owasp": ["Cybersecurity"],
+    "penetration-tester": ["Cybersecurity"],
+
+    # --- Kiểm thử (Software Testing / QA) ---
+    "selenium": ["Software Testing / QA"],
+    "cypress": ["Software Testing / QA"],
+    "postman": ["Software Testing / QA", "Web Development"],
+    "jmeter": ["Software Testing / QA"],
+
+    # --- Khác (Game, IoT, Support) ---
+    "unity": ["Game Development"],
+    "unreal-engine": ["Game Development"],
+    "arduino": ["Embedded Systems / IoT"],
+    "raspberry-pi": ["Embedded Systems / IoT"],
+    "active-directory": ["IT Support & Networking"],
+    "cisco": ["IT Support & Networking"]
 }
 
 def extract_concepts(cv_text):
@@ -57,7 +130,7 @@ def classify_cv(cv_text):
 
     for cat in candidate_cats:
         if cat not in CATEGORIES:
-            continue   # chống crash
+            continue
         desc = CATEGORIES[cat]
         cat_vec = embed_text(desc)
         sim = cosine_similarity([cv_vec], [cat_vec])[0][0]

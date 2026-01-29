@@ -29,7 +29,7 @@ def extract_education(text):
     return result
 
 def extract_experience(text):
-    exp_keywords = ["experience", "worked", "company", "project", "kinh nghiệm"]
+    exp_keywords = ["experience", "worked", "company", "project", "kinh nghiệm làm việc"]
     lines = text.split("\n")
     result = []
     for line in lines:
@@ -46,6 +46,6 @@ def extract_info(text):
         "email": extract_email(text),
         "phone": extract_phone(text),
         "skills": extract_skills(text),
-        "education": extract_education(text),     # BẮT BUỘC
-        "experience": extract_experience(text)    # BẮT BUỘC
+        "education": extract_education(text),
+        "experience": extract_experience(text)
     }
