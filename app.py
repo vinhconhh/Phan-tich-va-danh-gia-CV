@@ -144,16 +144,9 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
             st.metric("Điểm CV", f"{scoring['total_score']}/100")
             st.progress(scoring["total_score"] / 100)
 
-            # Chi tiết (không thanh con)
             st.markdown("### Chi tiết điểm")
-
             for k, v in scoring["breakdown"].items():
-                # điểm thực tế của từng mục
-                display_score = round(v["score"] * v["weight"])
-                st.write(
-                    f"**{k.upper()}** ( {v['weight']}%) : "
-                    f"{display_score}/{v['weight']}"
-                )
+                real = round(v["score"] * v["weight"])
+                st.write(f"**{k.upper()}** ({v['weight']}%) : {real}/{v['weight']}")
 
             st.divider()
-

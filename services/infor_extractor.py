@@ -1,51 +1,99 @@
 import re
+import unicodedata
+
+def normalize_text(text):
+    text = unicodedata.normalize("NFC", text)
+    text = text.lower()
+
+    # chỉ chuẩn hoá space trong mỗi dòng
+    lines = [re.sub(r"\s+", " ", l).strip() for l in text.split("\n")]
+    return "\n".join(lines)
+
+
+    # ÉP NGẮT DÒNG NHÂN TẠO
+    for k in ["kinh nghiệm", "học vấn", "education", "experience","kỹ năng", "skills", "objective", "mục tiêu"]: text = text.replace(k, "\n" + k + "\n")
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+
+def extract_section(text, start_keywords, stop_keywords):
+    text = normalize_text(text)
+
+    # CỰC KỲ QUAN TRỌNG: tách theo dòng, không phải theo từ
+    lines = text.split("\n")
+
+    result = []
+    capture = False
+
+    for line in lines:
+        line = line.strip()
+
+        if any(k in line for k in start_keywords):
+            capture = True
+            continue
+
+        if capture and any(k in line for k in stop_keywords):
+            break
+
+        if capture and len(line) > 3:
+            result.append(line)
+
+    return result
+
+
+def extract_name(text):
+    lines = text.split("\n")[:5]
+    for line in lines:
+        if len(line.split()) >= 2 and len(line) < 40:
+            return line.strip()
+    return "N/A"
+
 
 def extract_email(text):
-    pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    res = re.findall(pattern, text)
-    return res[0] if res else "N/A"
+    match = re.search(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", text.lower())
+    return match.group(0) if match else "N/A"
+
 
 def extract_phone(text):
-    pattern = r'(\+84|0)[0-9]{9,10}'
-    res = re.findall(pattern, text)
-    return res[0] if res else "N/A"
+    match = re.search(r"(0|\+84)\d{8,10}", text.replace(" ", ""))
+    return match.group(0) if match else "N/A"
+
 
 def extract_skills(text):
-    skills = ["python","java","sql","docker","aws","react","ml","ai"]
+    SKILLS = ["python", "java", "sql", "docker", "aws", "ml", "ai", "javascript", "react", "node", "linux", "git"]
+    text = normalize_text(text)
     found = []
-    text_lower = text.lower()
-    for s in skills:
-        if s in text_lower:
-            found.append(s)
+
+    for skill in SKILLS:
+        if skill in text:
+            found.append(skill)
+
     return found
 
-def extract_education(text):
-    edu_keywords = ["bachelor", "master", "phd", "đại học", "cao đẳng","học vấn","trình độ", "university"]
-    lines = text.split("\n")
-    result = []
-    for line in lines:
-        if any(k in line.lower() for k in edu_keywords):
-            result.append(line.strip())
-    return result
 
 def extract_experience(text):
-    exp_keywords = ["experience", "worked", "work experience", "company", "project", "kinh nghiệm", "kinh nghiệm làm việc","quá trình công tác", "dự án"]
-    lines = text.split("\n")
-    result = []
-    for line in lines:
-        if any(k in line.lower() for k in exp_keywords):
-            result.append(line.strip())
-    return result
+    return extract_section(
+        text,
+        start_keywords=["kinh nghiệm", "experience"],
+        stop_keywords=["học vấn", "education", "kỹ năng", "skills"]
+    )
+
+
+def extract_education(text):
+    return extract_section(
+        text,
+        start_keywords=["học vấn", "education", "trình độ"],
+        stop_keywords=["kinh nghiệm", "experience", "kỹ năng", "skills"]
+    )
+
 
 def extract_info(text):
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
-    name = lines[0] if lines else "N/A"
-
     return {
-        "name": name,
+        "name": extract_name(text),
         "email": extract_email(text),
         "phone": extract_phone(text),
         "skills": extract_skills(text),
-        "education": extract_education(text),
-        "experience": extract_experience(text)
+        "experience": extract_experience(text),
+        "education": extract_education(text)
     }
