@@ -1,3 +1,4 @@
+import re
 from services.embedding import embed_text
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -98,11 +99,16 @@ CONCEPT_TO_CATEGORY = {
     "cisco": ["IT Support & Networking"]
 }
 
+
 def extract_concepts(cv_text):
     text = cv_text.lower()
     concepts = []
+
+    # Sử dụng ranh giới từ (\b) để tránh false positives
     for k in CONCEPT_TO_CATEGORY.keys():
-        if k in text:
+        # Escape các ký tự đặc biệt nếu có (như c++, c#)
+        pattern = r'\b' + re.escape(k) + r'\b'
+        if re.search(pattern, text):
             concepts.append(k)
     return concepts
 
@@ -118,34 +124,25 @@ def classify_cv(cv_text):
     candidate_cats = infer_candidate_categories(concepts)
 
     if not candidate_cats:
-        return {
-            "category": "Other",
-            "confidence": 0,
-            "concepts": [],
-            "all_scores": {}
-        }
+        return {"category": "Other", "confidence": 0, "concepts": [], "all_scores": {}}
 
     cv_vec = embed_text(cv_text)
     scores = {}
 
+    # Chỉ so khớp vector với các danh mục ứng viên đã được bóc tách từ CV
     for cat in candidate_cats:
-        if cat not in CATEGORIES:
-            continue
-        desc = CATEGORIES[cat]
-        cat_vec = embed_text(desc)
-        sim = cosine_similarity([cv_vec], [cat_vec])[0][0]
-        scores[cat] = float(sim)
+        if cat in CATEGORIES:
+            desc = CATEGORIES[cat]
+            cat_vec = embed_text(desc)
+            sim = cosine_similarity([cv_vec], [cat_vec])[0][0]
+            scores[cat] = float(sim)
 
     if not scores:
-        return {
-            "category": "Other",
-            "confidence": 0,
-            "concepts": concepts,
-            "all_scores": {}
-        }
+        return {"category": "Other", "confidence": 0, "concepts": concepts, "all_scores": {}}
 
     best_cat = max(scores, key=scores.get)
 
+    # all_scores lúc này chỉ chứa các danh mục xuất hiện trong CV
     return {
         "concepts": concepts,
         "category": best_cat,
