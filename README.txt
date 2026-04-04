@@ -1,77 +1,61 @@
-TÊN SẢN PHẨM: Hệ thống phân tích và đánh giá CV bằng AI
+Bước 1: Tải mô hình AI (BẮT BUỘC)
+Truy cập link: https://huggingface.co/bartowski/google_gemma-3-4b-it-GGUF/blob/main/google_gemma-3-4b-it-Q4_K_M.gguf
 
-HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY:
+Tải file google_gemma-3-4b-it-Q4_K_M.gguf về máy.
 
-  CÁCH 1: Sử dụng script tự động (khuyên dùng)
-  ─────────────────────────────────────────────
-  1. Đảm bảo đã cài Python 3.10+ (tick "Add Python to PATH")
-  2. Double-click "setup.bat" → chờ cài đặt tự động (5-15 phút lần đầu)
-  3. Double-click "run.bat" → ứng dụng tự mở trên trình duyệt
+Chép file vừa tải vào thư mục: services/ (Lưu ý: Giữ đúng tên file để ứng dụng nhận diện).
 
-  CÁCH 2: Cài thủ công
-  ─────────────────────
-  1. Cài Python 3.10.11
+CÁCH 1: Sử dụng script tự động (Khuyên dùng)
+Đảm bảo đã cài Python 3.10+ (Tick vào ô "Add Python to PATH").
+Chạy file setup.bat -> Chờ cài đặt môi trường ảo và thư viện (5-15 phút).
+Chạy file run.bat -> Ứng dụng sẽ tự động khởi chạy trên trình duyệt.
 
-  2. Cài Poppler (cần thiết để đọc PDF):
-     - Windows: Tải tại https://github.com/oschwartz10612/poppler-windows/releases
-       Sau đó thêm thư mục bin vào PATH, hoặc set biến môi trường:
-       POPPLER_PATH=D:\poppler\Library\bin
-     - Linux/Mac: sudo apt install poppler-utils / brew install poppler
+CÁCH 2: Cài đặt thủ công
+Cài Poppler (Để đọc PDF):
+Windows: Giải nén Poppler và thêm thư mục Library\bin vào PATH hệ thống.
+Tạo môi trường ảo và cài thư viện:
+Bash
+python -m venv .venv
+source .venv/Scripts/activate
+pip install -r requirements.txt
 
-  3. Mở terminal tại thư mục project
-
-  4. Cài thư viện:
-     pip install -r requirements.txt
-
-  5. Chạy ứng dụng:
-     streamlit run app.py
-
-  6. Mở trình duyệt tại:
-     http://localhost:8501
-
-HƯỚNG DẪN SỬ DỤNG GEMINI AI:
-  1. Lấy API Key miễn phí tại: https://aistudio.google.com/apikey
-  2. Mở ứng dụng → nhập API Key vào ô bên sidebar trái
-  3. Upload CV → Nhấn "Phân Tích CV" → Vào Tab 4 "Đánh giá"
-  4. Nhấn "Xem đánh giá AI" cho từng CV để xem kết quả
+Chạy ứng dụng:
+Bash
+streamlit run app.py
+HƯỚNG DẪN SỬ DỤNG:
+Khởi động: Mở ứng dụng, hệ thống sẽ tự động load mô hình SBERT và Gemma 3.
+Upload: Kéo thả CV (PDF/DOCX) vào vùng upload (hỗ trợ nhiều file cùng lúc).
+Phân tích: Nhấn "Phân Tích CV" -> Xem kết quả tại các Tab: Thông tin, So khớp, Chấm điểm.
+Đánh giá AI: Tại Tab 4 "Đánh giá", nhấn "Xem đánh giá AI". Hệ thống sẽ dùng mô hình Gemma 3 chạy trực tiếp trên máy bạn để nhận xét ưu/nhược điểm của ứng viên.
 
 CẤU TRÚC THƯ MỤC:
-   app.py                  - Giao diện chính Streamlit
-   setup.bat               - Script cài đặt tự động
-   run.bat                 - Script chạy ứng dụng
-   services/
-     extractor.py          - Trích xuất text từ PDF/DOCX (pdfplumber + OCR fallback)
-     infor_extractor.py    - Trích xuất thông tin (tên, email, SĐT, kỹ năng...)
-     classifier.py         - Phân loại CV theo lĩnh vực IT (SBERT)
-     matcher.py            - So khớp CV với Job Description (SBERT cosine similarity)
-     score.py              - Chấm điểm CV
-     embedding.py          - Mô hình SBERT (multilingual-e5-base)
-     gemini_reviewer.py    - Đánh giá tính khách quan bằng Gemini AI
+app.py : Giao diện chính Streamlit.
+setup.bat / run.bat : Script tự động hóa.
+services/ : Thư mục chứa các module xử lý chính.
+extractor.py : Trích xuất văn bản từ PDF/DOCX.
+infor_extractor.py : Trích xuất thông tin thực thể (tên, kỹ năng...).
+classifier.py : Phân loại ngành nghề IT (SBERT).
+matcher.py : So khớp CV với JD (Cosine Similarity).
+local_llm_reviewer.py : Đánh giá CV bằng mô hình Gemma 3.
+google_gemma-3-4b-it-Q4_K_M.gguf : (File mô hình AI - Cần tải về).
+poppler-25.12.0/ : Thư viện hỗ trợ xử lý file PDF.
 
 MÔ TẢ TÍNH NĂNG:
-   - Phân loại CV theo 10 lĩnh vực IT (Web, AI, DevOps, Cybersecurity...)
-   - Trích xuất thông tin: tên, email, SĐT, học vấn, kinh nghiệm, kỹ năng
-   - So khớp CV với Job Description bằng SBERT (multilingual)
-   - Chấm điểm CV theo 5 tiêu chí: kỹ năng, kinh nghiệm, học vấn, độ dài, từ khoá
-   - Đánh giá tính khách quan bằng Gemini AI (cần API Key + Internet)
-   - Xuất kết quả ra file Excel (.xlsx)
-   - Hỗ trợ upload nhiều CV cùng lúc (PDF, DOCX)
-   - Đóng gói chạy offline (trừ tính năng Gemini AI)
+Phân loại: Tự động xếp CV vào các nhóm (Web, AI, Mobile, DevOps...).
+Trích xuất: Nhận diện thông tin cá nhân và bộ kỹ năng cứng/mềm.
+So khớp: Tính toán mức độ phù hợp (%) giữa ứng viên và mô tả công việc.
+Chấm điểm: Đánh giá dựa trên 5 tiêu chí định lượng.
+Review AI Local: Nhận xét chi tiết bằng ngôn ngữ tự nhiên thông qua Gemma 3 (Không cần Internet, không cần API Key).
+Xuất dữ liệu: Hỗ trợ xuất báo cáo tổng hợp ra file Excel.
 
-THƯ VIỆN SỬ DỤNG:
-   - streamlit            Giao diện web
-   - sentence-transformers Mô hình SBERT embedding
-   - scikit-learn         Cosine similarity
-   - pdfplumber           Đọc PDF có embedded text
-   - pdf2image + easyocr  OCR cho PDF scan
-   - python-docx          Đọc file DOCX
-   - numpy                Xử lý vector
-   - openpyxl             Xuất Excel
-   - torch                Backend cho SBERT
-   - google-genai         Gọi Gemini AI API
+THƯ VIỆN CHÍNH:
+streamlit : Giao diện người dùng.
+llama-cpp-python : Thư viện để chạy mô hình GGUF (Gemma 3).
+sentence-transformers : Mô hình SBERT Embedding.
+pdfplumber, python-docx : Đọc dữ liệu văn bản.
+torch, numpy : Xử lý tính toán vector.
 
 LƯU Ý:
-   - Lần đầu chạy sẽ tải mô hình SBERT (~1GB), cần kết nối internet
-   - PDF dạng scan sẽ chậm hơn do phải qua OCR
-   - Khuyến nghị dùng GPU để tăng tốc (tự động detect)
-   - Gemini AI cần kết nối Internet, các tính năng khác chạy offline
+Phần cứng: Khuyến nghị máy tính có ít nhất 8GB RAM và có GPU NVIDIA (nếu muốn AI phản hồi nhanh).
+Internet: Chỉ cần thiết để tải thư viện lần đầu. Sau khi đã có file .gguf, ứng dụng có thể chạy Offline 100%.
+Tính bảo mật: Toàn bộ quá trình phân tích diễn ra trên máy cá nhân, không có dữ liệu nào bị gửi lên Cloud.
