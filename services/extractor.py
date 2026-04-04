@@ -2,6 +2,7 @@ import os
 import io
 import docx
 import numpy as np
+import pdfplumber
 
 # ── Tỉ lệ cột trái (sidebar) của template TopCV / các CV 2 cột phổ biến ──
 LEFT_COL_RATIO = 0.33
@@ -15,7 +16,6 @@ def _extract_pdf_native(file_bytes: bytes) -> str:
       - Rồi đọc cột phải (education, experience)
     Với PDF 1 cột: đọc toàn trang bình thường.
     """
-    import pdfplumber
 
     pages_text = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:

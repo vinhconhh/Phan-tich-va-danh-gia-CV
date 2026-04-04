@@ -83,7 +83,6 @@ def is_date_line(line: str) -> bool:
     return bool(re.match(r"^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4}$", line.strip()))
 
 def detect_section(line: str):
-    """FIX: dùng startswith thay vì == để bắt 'Kinh nghiệm làm việc', v.v."""
     ll = unicodedata.normalize("NFC", line).lower().strip().rstrip(":")
     for keyword, section in SECTION_MAP:
         if ll == keyword or ll.startswith(keyword):
