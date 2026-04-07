@@ -1,13 +1,3 @@
-"""
-app.py  –  Tối ưu pipeline cho 50+ CV
-Thay đổi chính:
-  1. extract_text(): ThreadPoolExecutor(max_workers=6) – song song I/O
-  2. classify_cv_batch(): embed toàn bộ CV 1 lần, tính cosine vs cached category vecs
-  3. extract_info() + score_cv(): ThreadPoolExecutor song song
-  4. Progress bar chi tiết từng bước
-  5. LLM review lazy (mở expander mới chạy, không chặn toàn bộ tab)
-"""
-
 import io
 import re as _re
 from concurrent.futures import ThreadPoolExecutor, as_completed
