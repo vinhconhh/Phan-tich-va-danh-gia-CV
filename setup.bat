@@ -7,17 +7,13 @@ echo   CAI DAT HE THONG PHAN TICH VA DANH GIA CV
 echo ============================================
 echo.
 
-:: Tim Python - thu nhieu duong dan pho bien
+:: --- PHẦN TÌM PYTHON (GIỮ NGUYÊN CỦA BẠN) ---
 set "PYTHON_EXE="
-
-:: 1. Thu tu PATH truoc
 where python >nul 2>&1
 if not errorlevel 1 (
     set "PYTHON_EXE=python"
     goto :found_python
 )
-
-:: 2. Thu cac duong dan pho bien tren C: va D:
 for %%d in (C D E) do (
     for %%p in (
         "%%d:\Python310\python.exe"
@@ -32,76 +28,56 @@ for %%d in (C D E) do (
         )
     )
 )
-
-:: 3. Khong tim thay -> hoi nguoi dung nhap duong dan
 echo [CANH BAO] Khong tim thay Python tu dong!
-echo.
-echo Vui long nhap duong dan den python.exe
-echo Vi du: D:\Python310\python.exe
-echo.
 set /p PYTHON_EXE="Nhap duong dan python.exe: "
-
 if not exist "%PYTHON_EXE%" (
     echo [LOI] Khong tim thay file: %PYTHON_EXE%
-    echo Vui long cai Python 3.10.11 tai: https://www.python.org/downloads/release/python-31011/
     pause
     exit /b 1
 )
 
 :found_python
 echo [INFO] Su dung Python tai: %PYTHON_EXE%
-
-:: Kiem tra phien ban
 for /f "tokens=2 delims= " %%v in ('"%PYTHON_EXE%" --version 2^>^&1') do set PYVER=%%v
 echo [INFO] Phien ban Python: %PYVER%
-
-if NOT "%PYVER%"=="3.10.11" (
-    echo.
-    echo [CANH BAO] Yeu cau Python 3.10.11, nhung phat hien Python %PYVER%
-    echo Vui long cai dung Python 3.10.11 tai:
-    echo   https://www.python.org/downloads/release/python-31011/
-    echo.
-    echo Nhan phim bat ky de tiep tuc hoac dong cua so de dung.
-    pause
-)
-echo.
-
-:: Luu duong dan Python vao file de run.bat su dung
 echo %PYTHON_EXE%> .python_path
-echo [INFO] Da luu duong dan Python vao .python_path
-echo.
 
-:: Tao virtual environment
-echo [1/4] Dang tao virtual environment...
+:: --- BẮT ĐẦU CÀI ĐẶT ---
+
+echo [1/5] Dang tao virtual environment...
 if not exist ".venv" (
     "%PYTHON_EXE%" -m venv .venv
     echo       Da tao .venv thanh cong!
 ) else (
-    echo       .venv da ton tai, bo qua.
+    echo       .venv da ton tai.
 )
-echo.
 
-:: Cai dat thu vien
-echo [2/4] Dang cai dat thu vien (co the mat 5-15 phut)...
+:: Kích hoạt môi trường ảo
 call .venv\Scripts\activate.bat
-pip install -r requirements.txt
-echo.
 
-:: Tai mo hinh SBERT
-echo [3/4] Dang tai mo hinh AI (SBERT multilingual-e5-base)...
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base'); print('Da tai model thanh cong!')"
-echo.
+echo [2/5] Dang cap nhat cong cu cai dat (Pip, Setuptools)...
+python -m pip install --upgrade pip setuptools wheel --quiet
 
-:: Kiem tra Poppler
-echo [4/4] Kiem tra Poppler...
+echo [3/5] Dang cai dat PyTorch va Llama-CPP (Ban Build san)...
+:: Cài Torch bản CPU ổn định trước để tránh lỗi "No matching distribution"
+pip install torch --extra-index-url https://download.pytorch.org/whl/cpu --quiet
+:: Cài llama-cpp-python bản Pre-built để KHÔNG CẦN C++ Build Tools
+pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --quiet
+
+echo [4/5] Dang cai dat cac thu vien con lai tu requirements.txt...
+:: Lúc này requirements.txt sẽ chỉ cài các thư viện nhẹ (Streamlit, pdfplumber...)
+pip install -r requirements.txt --quiet
+
+echo [5/5] Dang tai mo hinh AI (SBERT multilingual-e5-base)...
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base'); print('      Da tai model SBERT thanh cong!')"
+
+:: Kiem tra Poppler (Giữ nguyên)
+echo.
 if exist "poppler-25.12.0" (
-    echo       Da phat hien Poppler, se tu dong cau hinh khi chay.
+    echo [INFO] Da phat hien Poppler.
 ) else (
-    echo       [CANH BAO] Khong tim thay thu muc poppler-25.12.0
-    echo       Can Poppler de doc PDF scan. Tai tai:
-    echo       https://github.com/oschwartz10612/poppler-windows/releases
+    echo [CANH BAO] Khong tim thay poppler-25.12.0. Can thiet de doc PDF scan!
 )
-echo.
 
 echo ============================================
 echo   CAI DAT HOAN TAT!
