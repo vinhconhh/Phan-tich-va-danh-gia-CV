@@ -20,7 +20,7 @@ pip-delete-this-directory.txt
 !.env.example
 .python_path
 
-# --- AI Models (Rất quan trọng để tránh lỗi 500/Remote hung up) ---
+# --- AI Models ---
 *.gguf
 *.bin
 *.onnx
@@ -31,7 +31,7 @@ models/
 # Chặn cụ thể file đang gây lỗi trong thư mục services
 services/*.gguf
 
-# --- Project Specific (Từ ảnh của bạn) ---
+# --- Project Specific ---
 build/
 core/
 poppler-*/

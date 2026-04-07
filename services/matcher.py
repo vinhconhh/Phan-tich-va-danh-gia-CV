@@ -1,9 +1,3 @@
-"""
-matcher.py  –  Tối ưu với normalized embeddings
-Vì embedding.py đã normalize_embeddings=True, cosine similarity = dot product.
-Dùng np.dot thay vì sklearn.cosine_similarity → nhanh hơn ~3x.
-"""
-
 import numpy as np
 from services.embedding import embed_batch
 

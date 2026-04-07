@@ -1,11 +1,3 @@
-"""
-classifier.py  –  Tối ưu cho 50+ CV
-Thay đổi chính:
-  1. Cache embedding của category descriptions (tính 1 lần duy nhất).
-  2. classify_cv_batch(): embed toàn bộ CV 1 lần với embed_batch().
-  3. classify_cv() giữ nguyên API nhưng gọi lại classify_cv_batch().
-"""
-
 import re
 import numpy as np
 import streamlit as st

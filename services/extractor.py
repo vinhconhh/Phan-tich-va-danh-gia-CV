@@ -9,14 +9,6 @@ LEFT_COL_RATIO = 0.33
 
 
 def _extract_pdf_native(file_bytes: bytes) -> str:
-    """
-    Đọc PDF có embedded text.
-    Với PDF 2 cột (sidebar trái + nội dung phải):
-      - Đọc cột trái trước (tên, SĐT, email)
-      - Rồi đọc cột phải (education, experience)
-    Với PDF 1 cột: đọc toàn trang bình thường.
-    """
-
     pages_text = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
