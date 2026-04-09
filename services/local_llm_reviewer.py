@@ -1,7 +1,7 @@
 from llama_cpp import Llama
 import os
 import streamlit as st
-import torch  # Thêm thư viện này để kiểm tra phần cứng
+import torch
 
 MODEL_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -10,17 +10,8 @@ MODEL_PATH = os.path.join(
 
 @st.cache_resource(show_spinner=False)
 def _load_llm() -> Llama:
-    """Load model 1 lần duy nhất, tự động thích ứng với phần cứng."""
-
-    # 1. Tự động phát hiện GPU có khả dụng hay không
     has_gpu = torch.cuda.is_available()
-
-    # 2. Nếu có GPU -> Đẩy 100% model lên GPU (-1). Nếu không -> Chạy 100% trên CPU (0)
     gpu_layers = -1 if has_gpu else 0
-
-    # 3. Quản lý luồng CPU:
-    # Nếu GPU đã gánh hết tính toán, CPU chỉ cần 1-2 luồng để "chỉ đạo".
-    # Nếu không có GPU, bung toàn bộ sức mạnh của CPU để xử lý.
     threads = 2 if has_gpu else (os.cpu_count() or 8)
 
     return Llama(
@@ -44,7 +35,6 @@ def review_cv_with_local_llm(
 ) -> str:
     llm = _load_llm()
 
-    # Cắt CV để tránh vượt context window
     cv_snippet = cv_text[:1800].strip()
 
     # Tóm gọn thông tin đầu vào

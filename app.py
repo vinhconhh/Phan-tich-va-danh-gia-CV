@@ -1,20 +1,16 @@
 import io
 import re as _re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 import pandas as pd
 import streamlit as st
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-
-from core.config import settings
 from services.classifier import classify_cv_batch
 from services.extractor import extract_text
 from services.infor_extractor import extract_info
 from services.local_llm_reviewer import review_cv_with_local_llm
 from services.matcher import rank_multiple_cvs
 from services.score import score_cv
-
-# ─── Page config ─────────────────────────────────────────────────────────────
+from services.classifier import classify_cv
 
 st.set_page_config(
     page_title="Phân tích và đánh giá CV",
@@ -22,8 +18,6 @@ st.set_page_config(
     layout="wide",
 )
 st.title("Phân tích, trích xuất, so khớp và đánh giá CV")
-
-# ─── INPUT ───────────────────────────────────────────────────────────────────
 
 col1, col2 = st.columns(2)
 with col1:
@@ -41,8 +35,6 @@ with col2:
         label_visibility="collapsed",
     )
 
-# ─── ANALYZE ─────────────────────────────────────────────────────────────────
-
 if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
 
     if not uploaded_files:
@@ -51,8 +43,6 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
 
     total_files = len(uploaded_files)
     st.info(f"Đang xử lý **{total_files}** CV...")
-
-    # ── Bước 1: Extract text song song ──────────────────────────────────────
     status = st.status("📥 Bước 1/3 – Đọc & trích xuất văn bản...", expanded=False)
     prog1  = st.progress(0.0, text="Extracting...")
 
@@ -73,26 +63,20 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
 
     prog1.empty()
     status.update(label=f"✅ Bước 1/3 – Đã đọc {total_files} CV", state="complete")
-
-    # ── Bước 2: Classify batch + extract_info + score song song ─────────────
     status2 = st.status("🔍 Bước 2/3 – Phân loại & trích xuất thông tin...", expanded=False)
     prog2   = st.progress(0.0, text="Classifying...")
-
     names = list(cv_texts.keys())
     texts = list(cv_texts.values())
-
-    # Classify toàn bộ CV 1 lần (embed_batch chạy 1 lần)
     clf_list       = classify_cv_batch(texts)
     classify_results = dict(zip(names, clf_list))
     prog2.progress(0.4, text="Trích xuất thông tin...")
-
-    # extract_info + score_cv song song (regex-based, CPU-bound nhưng nhẹ)
     extract_results: dict = {}
     score_results:   dict = {}
 
+
     def _process_one(name: str, text: str):
-        info  = extract_info(text)
-        score = score_cv(text, info)
+        info = extract_info(text)
+        score = score_cv(text, info, jd_text=jd_text)  # ← truyền jd_text
         return name, info, score
 
     done = 0
@@ -109,7 +93,6 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
     prog2.empty()
     status2.update(label="✅ Bước 2/3 – Phân loại & trích xuất xong", state="complete")
 
-    # ── Lưu session ─────────────────────────────────────────────────────────
     st.session_state.update({
         "cv_texts":        cv_texts,
         "classify_results": classify_results,
@@ -120,7 +103,6 @@ if st.button("🚀 Phân Tích CV", type="primary", use_container_width=True):
     })
     st.success(f"✅ Phân tích hoàn tất {total_files} CV!", icon="🎉")
 
-# ─── HIỂN THỊ KẾT QUẢ ────────────────────────────────────────────────────────
 
 if st.session_state.get("analyzed", False):
     cv_texts         = st.session_state["cv_texts"]
@@ -136,7 +118,6 @@ if st.session_state.get("analyzed", False):
         "⭐ Đánh giá",
     ])
 
-    # ── TAB 1: Phân loại ─────────────────────────────────────────────────────
     with tab1:
         st.header("1. Phân Loại CV")
         for name in cv_texts:
@@ -150,7 +131,6 @@ if st.session_state.get("analyzed", False):
                 st.bar_chart(clf["all_scores"])
             st.divider()
 
-    # ── TAB 2: Trích xuất ────────────────────────────────────────────────────
     with tab2:
         st.header("2. Trích Xuất Thông Tin")
 
@@ -178,13 +158,11 @@ if st.session_state.get("analyzed", False):
                 "👤 Họ tên":      st.column_config.TextColumn(width="small"),
                 "📧 Email":       st.column_config.TextColumn(width="medium"),
                 "📞 Điện thoại":  st.column_config.TextColumn(width="small"),
-                "🎓 Học vấn":     st.column_config.TextColumn(width="large"),
-                "💼 Kinh nghiệm": st.column_config.TextColumn(width="large"),
                 "🛠️ Kỹ năng":    st.column_config.TextColumn(width="medium"),
             },
         )
 
-        # ── Export Excel ──────────────────────────────────────────────────────
+        #Export Excel
         df_export = pd.DataFrame([{
             "File":        r["📄 File"],
             "Họ tên":      r["👤 Họ tên"],
@@ -273,14 +251,20 @@ if st.session_state.get("analyzed", False):
                             unsafe_allow_html=True,
                         )
 
-    # ── TAB 3: So khớp JD ────────────────────────────────────────────────────
     with tab3:
         st.header("3. So Khớp JD - CV")
         if not saved_jd_text.strip():
             st.warning("Vui lòng nhập Job Description để xem kết quả so khớp")
         else:
             with st.spinner("Đang tính độ phù hợp..."):
-                ranking = rank_multiple_cvs(cv_texts, saved_jd_text)
+                jd_category = classify_cv(saved_jd_text).get("category") if saved_jd_text else None
+
+                ranking = rank_multiple_cvs(
+                    cv_texts,
+                    saved_jd_text,
+                    classify_results=classify_results,
+                    jd_category=jd_category,
+                )
 
             df_rank = pd.DataFrame([
                 {"Hạng": i + 1, "File CV": name, "Độ phù hợp (%)": score}
@@ -298,7 +282,6 @@ if st.session_state.get("analyzed", False):
                 },
             )
 
-    # ── TAB 4: Đánh giá ──────────────────────────────────────────────────────
     with tab4:
         st.header("4. Đánh Giá Tổng Thể")
         weights = {"skills": 30, "experience": 30, "education": 15, "length": 10, "keywords": 15}
@@ -324,14 +307,12 @@ if st.session_state.get("analyzed", False):
         )
 
         st.caption("💡 Mở từng CV bên dưới để xem đánh giá chi tiết từ AI (chạy khi mở).")
-
-        # LLM review lazy: chỉ chạy khi user mở expander
         for name in cv_texts:
             with st.expander(f"🤖 {name}", expanded=False):
                 # Dùng key riêng để cache kết quả LLM review trong session
                 cache_key = f"llm_review_{name}"
                 if cache_key not in st.session_state:
-                    with st.spinner("AI đang phân tích..."):
+                    with st.spinner("AI đang phân tích, vui lòng đọc trước cv ..."):
                         st.session_state[cache_key] = review_cv_with_local_llm(
                             cv_text=cv_texts[name],
                             score_result=score_results[name],

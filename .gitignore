@@ -1,4 +1,3 @@
-# --- Python Artifacts ---
 __pycache__/
 *.py[cod]
 *$py.class
@@ -13,14 +12,7 @@ pip-delete-this-directory.txt
 *.egg-info/
 .installed.cfg
 *.egg
-
-# --- Environment & Secrets ---
-.env
-.env.*
-!.env.example
 .python_path
-
-# --- AI Models ---
 *.gguf
 *.bin
 *.onnx
@@ -28,18 +20,13 @@ pip-delete-this-directory.txt
 *.h5
 *.pth
 models/
-# Chặn cụ thể file đang gây lỗi trong thư mục services
 services/*.gguf
-
-# --- Project Specific ---
 build/
 core/
 poppler-*/
 .devcontainer/
 .idea/
 .vscode/
-
-# --- Data & Temporary Files ---
 data/
 uploads/
 temp_uploads/
@@ -51,8 +38,6 @@ temp_uploads/
 *.bak
 *.swp
 *.swo
-
-# --- System Files ---
 .DS_Store
 Thumbs.db
 desktop.ini

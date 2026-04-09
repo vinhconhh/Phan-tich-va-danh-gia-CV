@@ -3,7 +3,6 @@ import torch
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
-
 @st.cache_resource(show_spinner=False)
 def load_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,5 +26,5 @@ def embed_batch(texts: list, batch_size: int = 32, show_progress: bool = False) 
         batch_size=batch_size,
         show_progress_bar=show_progress,
         convert_to_numpy=True,
-        normalize_embeddings=True,   # L2-norm → cosine_sim chỉ cần dot product
+        normalize_embeddings=True,
     )

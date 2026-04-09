@@ -8,6 +8,7 @@ Chép file vừa tải vào thư mục: services/ (Lưu ý: Giữ đúng tên fi
 CÁCH 1: Sử dụng script tự động (Khuyên dùng)
 Đảm bảo đã cài Python 3.10+ (Tick vào ô "Add Python to PATH").
 Chạy file setup.bat -> Chờ cài đặt môi trường ảo và thư viện (5-15 phút).
+Sau khi chạy xong cài môi trường C++ qua vsBuildtool và chạy lại file setup.bat.
 Chạy file run.bat -> Ứng dụng sẽ tự động khởi chạy trên trình duyệt.
 
 CÁCH 2: Cài đặt thủ công

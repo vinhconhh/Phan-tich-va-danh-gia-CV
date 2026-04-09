@@ -1,86 +1,73 @@
 @echo off
 chcp 65001 >nul 2>&1
-title Setup - He thong phan tich CV
+title Setup - He thong phan tich CV va Cai dat C++
 
 echo ============================================
-echo   CAI DAT HE THONG PHAN TICH VA DANH GIA CV
+echo   CAI DAT HE THONG VA MOI TRUONG C++
 echo ============================================
 echo.
 
-:: --- PHẦN TÌM PYTHON (GIỮ NGUYÊN CỦA BẠN) ---
+:: --- BUOC 0: CAI DAT TRINH BIEN DICH C++ (MOI BO SUNG) ---
+echo [0/6] Kiem tra moi truong C++ (Build Tools)...
+where cl >nul 2>&1
+if %errorlevel% == 0 (
+    echo [INFO] Da tim thay trinh bien dich C++.
+) else (
+    echo [INFO] Khong tim thay C++ Compiler. Bat dau tai va cai dat...
+    echo [!] Qua trinh nay co the mat 10-15 phut tuy vao mang...
+
+    :: Su dung PowerShell de tai va cai dat Build Tools rut gon qua Chocolatey (neu co)
+    :: hoac tai truc tiep tu Microsoft.
+    :: Duoi day la lenh tai goi Microsoft C++ Build Tools am tham (silent install):
+    powershell -Command "Start-Process https://aka.ms/vs/17/release/vs_BuildTools.exe -ArgumentList '--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --norestart' -Wait"
+
+    echo [OK] Da gui lenh cai dat C++. Vui long doi den khi trinh cai dat bien mat.
+)
+
 set "PYTHON_EXE="
 where python >nul 2>&1
 if not errorlevel 1 (
     set "PYTHON_EXE=python"
     goto :found_python
 )
-for %%d in (C D E) do (
-    for %%p in (
-        "%%d:\Python310\python.exe"
-        "%%d:\Python\Python310\python.exe"
-        "%%d:\Program Files\Python310\python.exe"
-        "%%d:\Program Files (x86)\Python310\python.exe"
-        "%%d:\Users\%USERNAME%\AppData\Local\Programs\Python\Python310\python.exe"
-    ) do (
-        if exist %%p (
-            set "PYTHON_EXE=%%~p"
-            goto :found_python
-        )
-    )
-)
-echo [CANH BAO] Khong tim thay Python tu dong!
-set /p PYTHON_EXE="Nhap duong dan python.exe: "
-if not exist "%PYTHON_EXE%" (
-    echo [LOI] Khong tim thay file: %PYTHON_EXE%
-    pause
-    exit /b 1
-)
 
 :found_python
 echo [INFO] Su dung Python tai: %PYTHON_EXE%
-for /f "tokens=2 delims= " %%v in ('"%PYTHON_EXE%" --version 2^>^&1') do set PYVER=%%v
-echo [INFO] Phien ban Python: %PYVER%
 echo %PYTHON_EXE%> .python_path
 
-:: --- BẮT ĐẦU CÀI ĐẶT ---
+:: --- BAT DAU CAI DAT CAC BUOC TIEP THEO ---
 
-echo [1/5] Dang tao virtual environment...
+echo [1/6] Dang tao virtual environment...
 if not exist ".venv" (
     "%PYTHON_EXE%" -m venv .venv
-    echo       Da tao .venv thanh cong!
-) else (
-    echo       .venv da ton tai.
 )
-
-:: Kích hoạt môi trường ảo
 call .venv\Scripts\activate.bat
 
-echo [2/5] Dang cap nhat cong cu cai dat (Pip, Setuptools)...
+echo [2/6] Dang cap nhat cong cu cai dat...
 python -m pip install --upgrade pip setuptools wheel --quiet
 
-echo [3/5] Dang cai dat PyTorch va Llama-CPP (Ban Build san)...
-:: Cài Torch bản CPU ổn định trước để tránh lỗi "No matching distribution"
-pip install torch --extra-index-url https://download.pytorch.org/whl/cpu --quiet
-:: Cài llama-cpp-python bản Pre-built để KHÔNG CẦN C++ Build Tools
-pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --quiet
+echo [3/6] Dang cai dat Llama-CPP va Torch...
+nvidia-smi >nul 2>&1
+if %errorlevel% == 0 (
+    echo [INFO] Phat hien GPU. Cai ban ho tro CUDA...
+    pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu121
+    pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+) else (
+    echo [INFO] Khong co GPU. Cai ban CPU...
+    pip install torch --extra-index-url https://download.pytorch.org/whl/cpu
+    pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+)
 
-echo [4/5] Dang cai dat cac thu vien con lai tu requirements.txt...
-:: Lúc này requirements.txt sẽ chỉ cài các thư viện nhẹ (Streamlit, pdfplumber...)
+echo [4/6] Dang cai dat requirements.txt...
 pip install -r requirements.txt --quiet
 
-echo [5/5] Dang tai mo hinh AI (SBERT multilingual-e5-base)...
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base'); print('      Da tai model SBERT thanh cong!')"
+echo [5/6] Dang tai mo hinh AI...
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-base')"
 
-:: Kiem tra Poppler (Giữ nguyên)
-echo.
-if exist "poppler-25.12.0" (
-    echo [INFO] Da phat hien Poppler.
-) else (
-    echo [CANH BAO] Khong tim thay poppler-25.12.0. Can thiet de doc PDF scan!
-)
+echo [6/6] Kiem tra Poppler...
+if exist "poppler-25.12.0" (echo [INFO] Da co Poppler.) else (echo [!] Thieu Poppler.)
 
 echo ============================================
 echo   CAI DAT HOAN TAT!
-echo   Chay "run.bat" de khoi dong ung dung.
 echo ============================================
 pause

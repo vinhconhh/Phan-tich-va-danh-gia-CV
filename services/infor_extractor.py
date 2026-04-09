@@ -8,8 +8,6 @@ SKILL_DB = [
     "fastapi", "flask", "django", "c++", "c#", "golang", "rust"
 ]
 
-# Mỗi section: (từ khoá nhận diện header, section key)
-# Sắp xếp dài -> ngắn để tránh match nhầm
 SECTION_MAP = [
     ("work experience",          "experience"),
     ("kinh nghiệm làm việc",     "experience"),
@@ -34,7 +32,6 @@ SECTION_MAP = [
     ("mục tiêu",                 "summary"),
     ("summary",                  "summary"),
     ("objective",                "summary"),
-    # ── Các section bỏ qua (không hiển thị) ──
     ("certifications",           "ignore"),
     ("chứng chỉ",                "ignore"),
     ("chung chi",                "ignore"),
@@ -106,7 +103,6 @@ def parse_sections(raw_text: str) -> dict:
         if sec:
             current = sec
             continue
-        # Lọc email/date khỏi experience (nhưng GIỮ LẠI để phone extract sau)
         if current == "experience" and (is_email_line(line) or is_date_line(line)):
             continue
         sections[current].append(line)
@@ -117,7 +113,6 @@ def parse_sections(raw_text: str) -> dict:
 def extract_name(raw_text: str) -> str:
     lines = raw_text.split("\n")[:20]
 
-    # Format "Họ tên: Nguyễn Văn A" — cùng dòng
     for line in lines:
         m = re.match(
             r"^(họ\s*(?:và\s*)?tên|full\s*name|name)\s*[:\-]\s*(.+)$",
@@ -128,7 +123,6 @@ def extract_name(raw_text: str) -> str:
             if candidate and candidate.lower() not in FORBIDDEN_NAMES:
                 return candidate
 
-    # Format "Họ tên:" dòng riêng, tên ở dòng kế
     for i, line in enumerate(lines):
         if re.match(r"^(họ\s*(?:và\s*)?tên|full\s*name|name)\s*[:\-]?\s*$",
                     line.strip(), re.IGNORECASE):
@@ -138,10 +132,8 @@ def extract_name(raw_text: str) -> str:
                         and not is_email_line(c) and not is_phone_line(c)):
                     return c
 
-    # Fallback: dòng trông giống tên người (2–5 từ, có chữ hoa tiếng Việt)
     for line in lines:
         line = line.strip()
-        # Bỏ qua nếu chứa từ bị cấm
         if any(fw in line.lower() for fw in FORBIDDEN_NAMES):
             continue
         words = line.split()
@@ -150,9 +142,8 @@ def extract_name(raw_text: str) -> str:
                 and "@" not in line
                 and "http" not in line.lower()
                 and not re.search(r"\d{3,}", line)
-                # Phải toàn chữ cái + khoảng trắng (không có ký tự lạ)
                 and re.match(r"^[A-ZÀ-Ỵa-zà-ỵ\s]+$", line)
-                and re.search(r"[A-ZÀ-Ỵ]", line)):   # ít nhất 1 chữ hoa
+                and re.search(r"[A-ZÀ-Ỵ]", line)):
             line = re.sub(r"\s+[A-ZÀ-Ỵ]$", "", line).strip()
             return line
 
@@ -177,17 +168,11 @@ def extract_phone(raw_text: str) -> str:
 def extract_skills(raw_text: str) -> list:
     t = unicodedata.normalize("NFC", raw_text).lower()
     return sorted({s for s in SKILL_DB if s in t})
-
-# ── Gộp dòng bị vỡ do PDF wrap ──
-
-# Dòng KẾT THÚC như 1 heading (không nối tiếp xuống dòng sau)
 _HEADING_END_RE = re.compile(
     r'(\d{4}\s*[-]\s*(\d{4}|nay|present|hien\s*tai|hi\u1ec7n\s*t\u1ea1i)|'
     r'\d{2}[/]\d{4}\s*[-]\s*(\d{2}[/]\d{4}|hi\u1ec7n\s*t\u1ea1i|present|nay))\s*$',
     re.IGNORECASE
 )
-
-# Dòng là fragment tiếp nối (bắt đầu bằng chữ thường HOẶC % hoặc ký tự tiếp nối)
 _CONTINUATION_RE = re.compile(
     r'^([a-z\u00e0-\u1ef9%\(\[\{\d]|HTML|CSS|API|SDK|SQL|ETL|ELT|AWS|GCP|EC2|SLA|KPI|DAG|URL|DynamoDB|ML|Hive|Redis|Kafka|Spark|Airflow|Docker|GitFlow|Analytics|Associate|Azure|Google|Microsoft)'
 )
@@ -198,11 +183,9 @@ def merge_wrapped_lines(lines):
     merged = [lines[0]]
     for line in lines[1:]:
         prev = merged[-1]
-        # Dòng trước là heading (kết thúc bằng năm/ngày) → KHÔNG gộp
         if _HEADING_END_RE.search(prev):
             merged.append(line)
             continue
-        # Dòng trước kết thúc câu hoàn chỉnh và dòng sau KHÔNG phải fragment
         prev_complete = bool(re.search(r'[.!?;]\s*$', prev))
         curr_fragment = bool(_CONTINUATION_RE.match(line))
         prev_ends_arrow = bool(re.search(r'\u2192\s*$', prev))
@@ -212,12 +195,10 @@ def merge_wrapped_lines(lines):
             merged.append(line)
     return merged
 
-# ── Clean dòng cho experience/education ──
 def clean_lines(lines: list, min_len: int = 5, max_len: int = 300) -> list:
     result = []
     for line in lines:
         line = line.strip(" -–•")
-        # Bỏ dòng copyright và noise cuối CV
         if line.startswith("©") or "topcv.vn" in line.lower():
             continue
         if (min_len <= len(line) <= max_len

@@ -1,4 +1,5 @@
 streamlit
+scikit-learn
 torch
 sentence-transformers
 llama-cpp-python

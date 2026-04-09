@@ -2,10 +2,7 @@ import re
 import numpy as np
 import streamlit as st
 from sklearn.metrics.pairwise import cosine_similarity
-
 from services.embedding import embed_batch
-
-# ─── Taxonomy ────────────────────────────────────────────────────────────────
 
 CATEGORIES = {
     "Web Development":        "frontend backend fullstack javascript react nodejs html css typescript flask django express nextjs bootstrap tailwind",
@@ -92,16 +89,10 @@ CONCEPT_TO_CATEGORY = {
 _CAT_NAMES  = list(CATEGORIES.keys())
 _CAT_DESCS  = list(CATEGORIES.values())
 
-
-# ─── Cache category embeddings (tính 1 lần, dùng mãi mãi) ───────────────────
-
 @st.cache_resource(show_spinner=False)
 def _get_cat_vecs() -> np.ndarray:
     """Embed category descriptions 1 lần, cache vĩnh viễn."""
     return embed_batch(_CAT_DESCS)   # shape: (num_cats, embed_dim)
-
-
-# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def extract_concepts(cv_text: str) -> list:
     text = cv_text.lower()
@@ -118,26 +109,13 @@ def _infer_candidate_indices(concepts: list) -> list:
                 cats.add(_CAT_NAMES.index(cat))
     return list(cats)
 
-
-# ─── Batch classify (API mới, dùng trong app.py) ─────────────────────────────
-
 def classify_cv_batch(cv_texts: list) -> list:
-    """
-    Classify nhiều CV cùng lúc.
-    Trả về list[dict] theo đúng thứ tự đầu vào.
-
-    Ưu điểm:
-      - embed_batch() 1 lần cho toàn bộ CV
-      - category embeddings được cache sẵn
-      - cosine_similarity tính trên numpy arrays → nhanh
-    """
     if not cv_texts:
         return []
 
-    cat_vecs = _get_cat_vecs()               # (num_cats, dim)
-    cv_vecs  = embed_batch(cv_texts)         # (num_cvs, dim)  – 1 lần duy nhất
+    cat_vecs = _get_cat_vecs()
+    cv_vecs  = embed_batch(cv_texts)
 
-    # Ma trận similarity: (num_cvs, num_cats)
     all_sims = cosine_similarity(cv_vecs, cat_vecs)
 
     results = []
@@ -163,9 +141,6 @@ def classify_cv_batch(cv_texts: list) -> list:
         })
 
     return results
-
-
-# ─── Single-CV wrapper (giữ nguyên API cũ) ───────────────────────────────────
 
 def classify_cv(cv_text: str) -> dict:
     return classify_cv_batch([cv_text])[0]
