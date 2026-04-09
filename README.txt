@@ -12,7 +12,7 @@ Sau khi chạy xong cài môi trường C++ qua vsBuildtool và chạy lại fil
 Chạy file run.bat -> Ứng dụng sẽ tự động khởi chạy trên trình duyệt.
 
 CÁCH 2: Cài đặt thủ công
-Cài Poppler (Để đọc PDF):
+Cài Poppler (Để đọc PDF): https://github.com/oschwartz10612/poppler-windows/releases/tag/v25.12.0-0
 Windows: Giải nén Poppler và thêm thư mục Library\bin vào PATH hệ thống.
 Tạo môi trường ảo và cài thư viện:
 Bash
